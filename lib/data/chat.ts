@@ -46,22 +46,29 @@ export async function getChatMessages(
 export type ChatParticipant = { id: string; fullName: string };
 
 // Everyone who could plausibly post in this athlete's chat: the athlete
-// themselves plus their active care team, so realtime messages can always
-// resolve an author name without an extra round trip.
+// themselves (if they've claimed an account) plus their active care team,
+// so realtime messages can always resolve an author name without an extra
+// round trip. Keyed by auth user id, since that's what chat_messages.author_id
+// stores — an unclaimed athlete has no account and so can't post at all.
 export async function getChatParticipants(athleteId: string): Promise<ChatParticipant[]> {
   const supabase = await createClient();
 
-  const { data: careTeam } = await supabase
-    .from("athlete_care_team")
-    .select("expert_id")
-    .eq("athlete_id", athleteId)
-    .eq("is_active", true);
+  const [{ data: profile }, { data: careTeam }] = await Promise.all([
+    supabase.from("athlete_profiles").select("full_name, claimed_user_id").eq("id", athleteId).maybeSingle(),
+    supabase.from("athlete_care_team").select("expert_id").eq("athlete_id", athleteId).eq("is_active", true),
+  ]);
 
-  const ids = [...new Set([athleteId, ...(careTeam ?? []).map((c) => c.expert_id)])];
-  const { data: profiles } = await supabase
-    .from("public_profiles")
-    .select("id, full_name")
-    .in("id", ids);
+  const expertIds = [...new Set((careTeam ?? []).map((c) => c.expert_id))];
+  const { data: expertProfiles } = expertIds.length
+    ? await supabase.from("public_profiles").select("id, full_name").in("id", expertIds)
+    : { data: [] as { id: string; full_name: string }[] };
 
-  return (profiles ?? []).map((p) => ({ id: p.id, fullName: p.full_name }));
+  const participants: ChatParticipant[] = (expertProfiles ?? []).map((p) => ({
+    id: p.id,
+    fullName: p.full_name,
+  }));
+  if (profile?.claimed_user_id) {
+    participants.push({ id: profile.claimed_user_id, fullName: profile.full_name });
+  }
+  return participants;
 }

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getAthleteDetail } from "@/lib/data/athletes";
 import { getChatMessages, getChatParticipants } from "@/lib/data/chat";
 import { ChatPanel } from "@/components/chat/chat-panel";
+import { ClaimForm } from "@/components/roster/claim-form";
 import { createClient } from "@/lib/supabase/server";
 
 function Field({ label, value }: { label: string; value: string | number | null | undefined }) {
@@ -44,6 +45,12 @@ export default async function FichaPage({
       <p className="text-sm text-black/50">Ficha de deportista</p>
       <h1 className="text-2xl font-semibold">{athlete.fullName}</h1>
       <p className="mt-1 text-black/60">{athlete.sport ?? "Sin deporte registrado"}</p>
+
+      {!athlete.claimed && (
+        <div className="mt-4">
+          <ClaimForm athleteId={athleteId} />
+        </div>
+      )}
 
       <section className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
         <div>

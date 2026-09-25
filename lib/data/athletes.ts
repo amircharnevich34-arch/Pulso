@@ -1,10 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
 
+// The athlete_profiles.id for the currently logged-in deportista, if their
+// account has been linked to a profile. Null means nobody has connected
+// this login to a roster entry yet.
+export async function getMyAthleteProfileId(userId: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("athlete_profiles")
+    .select("id")
+    .eq("claimed_user_id", userId)
+    .maybeSingle();
+  return data?.id ?? null;
+}
+
 export type RosterAthlete = {
   athleteId: string;
   fullName: string;
   sport: string | null;
   status: string;
+  claimed: boolean;
 };
 
 export async function getCareTeamRoster(): Promise<RosterAthlete[]> {
@@ -16,31 +30,26 @@ export async function getCareTeamRoster(): Promise<RosterAthlete[]> {
 
   const { data: careTeam, error } = await supabase
     .from("athlete_care_team")
-    .select("athlete_id, athlete_profiles!inner(user_id, sport, status)")
+    .select("athlete_id, athlete_profiles!inner(id, full_name, sport, status, claimed_user_id)")
     .eq("expert_id", user.id)
     .eq("is_active", true);
 
   if (error || !careTeam || careTeam.length === 0) return [];
 
-  const athleteIds = careTeam.map((row) => row.athlete_id);
-  const { data: profiles } = await supabase
-    .from("public_profiles")
-    .select("id, full_name")
-    .in("id", athleteIds);
-
-  const nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
-
   return careTeam.map((row) => {
     const profile = row.athlete_profiles as unknown as {
-      user_id: string;
+      id: string;
+      full_name: string;
       sport: string | null;
       status: string;
+      claimed_user_id: string | null;
     };
     return {
-      athleteId: profile.user_id,
-      fullName: nameById.get(profile.user_id) ?? "—",
+      athleteId: profile.id,
+      fullName: profile.full_name,
       sport: profile.sport,
       status: profile.status,
+      claimed: profile.claimed_user_id != null,
     };
   });
 }
@@ -50,6 +59,7 @@ export type AthleteDetail = {
   fullName: string;
   sport: string | null;
   birthDate: string | null;
+  claimed: boolean;
   medical: {
     restingHr: number | null;
     bloodPressure: string | null;
@@ -88,15 +98,14 @@ export async function getAthleteDetail(
 
   const { data: profile, error: profileError } = await supabase
     .from("athlete_profiles")
-    .select("user_id, sport, birth_date")
-    .eq("user_id", athleteId)
+    .select("id, full_name, sport, birth_date, claimed_user_id")
+    .eq("id", athleteId)
     .maybeSingle();
 
   if (profileError || !profile) return null;
 
-  const [{ data: ownProfile }, { data: medical }, { data: training }, { data: nutrition }, { data: evaluations }] =
+  const [{ data: medical }, { data: training }, { data: nutrition }, { data: evaluations }] =
     await Promise.all([
-      supabase.from("public_profiles").select("full_name").eq("id", athleteId).maybeSingle(),
       supabase
         .from("athlete_medical_status")
         .select("*")
@@ -126,10 +135,11 @@ export async function getAthleteDetail(
   const authorNameById = new Map((authors ?? []).map((a) => [a.id, a.full_name]));
 
   return {
-    athleteId: profile.user_id,
-    fullName: ownProfile?.full_name ?? "—",
+    athleteId: profile.id,
+    fullName: profile.full_name,
     sport: profile.sport,
     birthDate: profile.birth_date,
+    claimed: profile.claimed_user_id != null,
     medical: medical
       ? {
           restingHr: medical.resting_hr,

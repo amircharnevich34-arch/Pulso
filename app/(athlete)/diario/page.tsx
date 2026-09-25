@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getMyAthleteProfileId } from "@/lib/data/athletes";
 import { getPainDiary } from "@/lib/data/diary";
 import { PainDiaryForm } from "@/components/dieta/pain-diary-form";
 import { DietDiaryForm } from "@/components/dieta/diet-diary-form";
@@ -22,14 +23,27 @@ export default async function DiarioPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const athleteId = await getMyAthleteProfileId(user!.id);
+
+  if (!athleteId) {
+    return (
+      <main className="p-6">
+        <h1 className="text-2xl font-semibold">Mi diario</h1>
+        <p className="mt-2 text-black/60">
+          Tu cuenta todavía no está conectada con tu ficha de deportista.
+        </p>
+      </main>
+    );
+  }
+
   const { data: dietEntries } = await supabase
     .from("diary_diet_entries")
     .select("id, entry_date, notes")
-    .eq("athlete_id", user!.id)
+    .eq("athlete_id", athleteId)
     .order("entry_date", { ascending: false })
     .order("created_at", { ascending: false });
 
-  const painEntries = await getPainDiary(user!.id);
+  const painEntries = await getPainDiary(athleteId);
 
   return (
     <main className="p-6">

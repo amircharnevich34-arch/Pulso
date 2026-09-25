@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { todayInMexicoCity } from "@/lib/date";
+import { getMyAthleteProfileId } from "@/lib/data/athletes";
 
 export type DiaryFormState = { error?: string; success?: boolean };
 
@@ -16,13 +17,16 @@ export async function createPainEntry(
   } = await supabase.auth.getUser();
   if (!user) return { error: "No hay sesión activa." };
 
+  const athleteId = await getMyAthleteProfileId(user.id);
+  if (!athleteId) return { error: "Tu cuenta todavía no está conectada con tu ficha de deportista." };
+
   const painZone = (formData.get("painZone") as string) || null;
   const severityRaw = formData.get("painSeverity");
   const energyLevel = (formData.get("energyLevel") as string) || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
   const { error } = await supabase.from("diary_pain_entries").insert({
-    athlete_id: user.id,
+    athlete_id: athleteId,
     entry_date: todayInMexicoCity(),
     pain_zone: painZone,
     pain_severity: severityRaw ? Number(severityRaw) : null,
@@ -47,11 +51,14 @@ export async function createDietDiaryEntry(
   } = await supabase.auth.getUser();
   if (!user) return { error: "No hay sesión activa." };
 
+  const athleteId = await getMyAthleteProfileId(user.id);
+  if (!athleteId) return { error: "Tu cuenta todavía no está conectada con tu ficha de deportista." };
+
   const notes = String(formData.get("notes") ?? "").trim();
   if (!notes) return { error: "Escribí algo antes de guardar." };
 
   const { error } = await supabase.from("diary_diet_entries").insert({
-    athlete_id: user.id,
+    athlete_id: athleteId,
     entry_date: todayInMexicoCity(),
     notes,
   });

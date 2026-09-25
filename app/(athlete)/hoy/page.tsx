@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getMyAthleteProfileId } from "@/lib/data/athletes";
 import { getChatMessages, getChatParticipants } from "@/lib/data/chat";
 import { getActiveTrainingPlan, getActiveNutritionPlan } from "@/lib/data/plans";
 import { getFoodBankByCategory } from "@/lib/data/foodbank";
@@ -15,14 +16,28 @@ export default async function HoyPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const athleteId = user!.id;
+  const userId = user!.id;
   const logDate = todayInMexicoCity();
 
   const { data: profile } = await supabase
     .from("users")
     .select("full_name, role")
-    .eq("id", athleteId)
+    .eq("id", userId)
     .single();
+
+  const athleteId = await getMyAthleteProfileId(userId);
+
+  if (!athleteId) {
+    return (
+      <main className="p-6">
+        <h1 className="text-2xl font-semibold">Hoy</h1>
+        <p className="mt-2 text-black/60">
+          Hola, {profile?.full_name?.split(" ")[0] ?? "—"} — tu cuenta todavía no está
+          conectada con tu ficha de deportista. Pedile a tu equipo que la vincule.
+        </p>
+      </main>
+    );
+  }
 
   const [trainingPlan, nutritionPlan, foodBank, messages, participants] = await Promise.all([
     getActiveTrainingPlan(athleteId),
@@ -110,7 +125,7 @@ export default async function HoyPage() {
           channel="atleta"
           initialMessages={messages}
           participants={participants}
-          currentUserId={athleteId}
+          currentUserId={userId}
           currentUserName={profile?.full_name ?? "—"}
           currentUserRole={profile?.role ?? "deportista"}
           placeholder="Escribile a tu equipo…"
