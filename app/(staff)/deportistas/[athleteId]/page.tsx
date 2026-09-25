@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getAthleteDetail } from "@/lib/data/athletes";
 import { getChatMessages, getChatParticipants } from "@/lib/data/chat";
+import { getAthleteGameLog } from "@/lib/data/games";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { ClaimForm } from "@/components/roster/claim-form";
 import { createClient } from "@/lib/supabase/server";
@@ -34,10 +35,11 @@ export default async function FichaPage({
     .eq("id", user!.id)
     .single();
 
-  const [teamMessages, athleteMessages, participants] = await Promise.all([
+  const [teamMessages, athleteMessages, participants, gameLog] = await Promise.all([
     getChatMessages(athleteId, "equipo"),
     getChatMessages(athleteId, "atleta"),
     getChatParticipants(athleteId),
+    getAthleteGameLog(athleteId),
   ]);
 
   return (
@@ -52,7 +54,7 @@ export default async function FichaPage({
         </div>
       )}
 
-      <section className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
+      <section className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2">
         <div>
           <h2 className="mb-3 font-semibold">Médico</h2>
           {athlete.medical ? (
@@ -86,30 +88,44 @@ export default async function FichaPage({
             <p className="text-sm text-black/50">Sin datos de entrenamiento todavía.</p>
           )}
         </div>
+      </section>
 
-        <div>
-          <h2 className="mb-3 font-semibold">Nutrición</h2>
-          {athlete.nutrition ? (
-            <div className="grid gap-3">
-              <Field label="Objetivo calórico" value={athlete.nutrition.calorieTarget} />
-              <Field
-                label="Macros (P/C/G)"
-                value={
-                  athlete.nutrition.proteinG != null
-                    ? `${athlete.nutrition.proteinG}P / ${athlete.nutrition.carbsG}C / ${athlete.nutrition.fatG}G`
-                    : null
-                }
-              />
-              <Field label="Próxima consulta" value={athlete.nutrition.nextConsultDate} />
-              <Field
-                label="Adherencia"
-                value={athlete.nutrition.adherencePct != null ? `${athlete.nutrition.adherencePct}%` : null}
-              />
-            </div>
-          ) : (
-            <p className="text-sm text-black/50">Sin datos de nutrición todavía.</p>
-          )}
-        </div>
+      <section className="mt-10">
+        <h2 className="mb-3 font-semibold">Rendimiento en juegos</h2>
+        {gameLog.length === 0 ? (
+          <p className="text-sm text-black/50">Todavía no jugó ningún partido registrado.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse text-sm">
+              <thead>
+                <tr>
+                  <th className="border border-black/10 bg-black/[.02] p-2 text-left">Partido</th>
+                  <th className="border border-black/10 bg-black/[.02] p-2">Min</th>
+                  <th className="border border-black/10 bg-black/[.02] p-2">Pts</th>
+                  <th className="border border-black/10 bg-black/[.02] p-2">Reb</th>
+                  <th className="border border-black/10 bg-black/[.02] p-2">Ast</th>
+                  <th className="border border-black/10 bg-black/[.02] p-2">Rob</th>
+                  <th className="border border-black/10 bg-black/[.02] p-2">Blq</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gameLog.map((g) => (
+                  <tr key={g.gameId}>
+                    <td className="border border-black/10 p-2">
+                      {g.playedAt} {g.opponent ? `vs ${g.opponent}` : ""}
+                    </td>
+                    <td className="border border-black/10 p-2 text-center tabular-nums">{g.minutesPlayed ?? "—"}</td>
+                    <td className="border border-black/10 p-2 text-center tabular-nums">{g.points ?? "—"}</td>
+                    <td className="border border-black/10 p-2 text-center tabular-nums">{g.rebounds ?? "—"}</td>
+                    <td className="border border-black/10 p-2 text-center tabular-nums">{g.assists ?? "—"}</td>
+                    <td className="border border-black/10 p-2 text-center tabular-nums">{g.steals ?? "—"}</td>
+                    <td className="border border-black/10 p-2 text-center tabular-nums">{g.blocks ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className="mt-10">

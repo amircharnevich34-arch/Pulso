@@ -6,6 +6,7 @@ const links = [
   { href: "/deportistas", label: "Deportistas" },
   { href: "/evaluaciones", label: "Evaluaciones" },
   { href: "/planes", label: "Planes" },
+  { href: "/juegos", label: "Partidos" },
 ];
 
 export function StaffNav() {

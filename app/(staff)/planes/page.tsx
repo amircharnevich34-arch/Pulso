@@ -1,21 +1,18 @@
 import { getCareTeamRoster } from "@/lib/data/athletes";
 import { getPlansForCareTeam } from "@/lib/data/plan-actions";
-import { getMealSlots, getFoodCategories } from "@/lib/data/reference";
+import { getRoutineCategories } from "@/lib/data/routine-categories";
 import { PlanBuilder } from "@/components/planes/plan-builder";
 
-const typeLabel: Record<string, string> = { entrenamiento: "Entrenamiento", nutricion: "Nutrición" };
-
 export default async function PlanesPage() {
-  const [athletes, plans, mealSlots, categories] = await Promise.all([
+  const [athletes, plans, categories] = await Promise.all([
     getCareTeamRoster(),
     getPlansForCareTeam(),
-    getMealSlots(),
-    getFoodCategories(),
+    getRoutineCategories(),
   ]);
 
   return (
     <main className="p-8">
-      <h1 className="text-2xl font-semibold">Planes y prescripciones</h1>
+      <h1 className="text-2xl font-semibold">Planes de entrenamiento</h1>
 
       {athletes.length === 0 ? (
         <p className="mt-4 text-black/60">
@@ -23,7 +20,7 @@ export default async function PlanesPage() {
         </p>
       ) : (
         <div className="mt-6">
-          <PlanBuilder athletes={athletes} mealSlots={mealSlots} categories={categories} />
+          <PlanBuilder athletes={athletes} categories={categories} />
         </div>
       )}
 
@@ -36,10 +33,7 @@ export default async function PlanesPage() {
             {plans.map((p) => (
               <li key={p.id} className="flex items-center justify-between py-3 text-sm">
                 <div>
-                  <span className="rounded-full bg-black/5 px-2 py-0.5 text-xs uppercase">
-                    {typeLabel[p.type] ?? p.type}
-                  </span>
-                  <span className="ml-2 font-medium">{p.name}</span>
+                  <span className="font-medium">{p.name}</span>
                   <span className="ml-2 text-black/50">— {p.athleteName}</span>
                 </div>
                 {p.expiresAt && <span className="text-black/50">vence {p.expiresAt}</span>}

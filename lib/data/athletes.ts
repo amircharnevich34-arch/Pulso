@@ -74,14 +74,6 @@ export type AthleteDetail = {
     speedTestResult: string | null;
     nextSessionAt: string | null;
   } | null;
-  nutrition: {
-    calorieTarget: number | null;
-    proteinG: number | null;
-    carbsG: number | null;
-    fatG: number | null;
-    nextConsultDate: string | null;
-    adherencePct: number | null;
-  } | null;
   evaluations: {
     id: string;
     type: string;
@@ -104,7 +96,7 @@ export async function getAthleteDetail(
 
   if (profileError || !profile) return null;
 
-  const [{ data: medical }, { data: training }, { data: nutrition }, { data: evaluations }] =
+  const [{ data: medical }, { data: training }, { data: evaluations }] =
     await Promise.all([
       supabase
         .from("athlete_medical_status")
@@ -113,11 +105,6 @@ export async function getAthleteDetail(
         .maybeSingle(),
       supabase
         .from("athlete_training_status")
-        .select("*")
-        .eq("athlete_id", athleteId)
-        .maybeSingle(),
-      supabase
-        .from("athlete_nutrition_status")
         .select("*")
         .eq("athlete_id", athleteId)
         .maybeSingle(),
@@ -156,16 +143,6 @@ export async function getAthleteDetail(
           maxStrength: training.max_strength,
           speedTestResult: training.speed_test_result,
           nextSessionAt: training.next_session_at,
-        }
-      : null,
-    nutrition: nutrition
-      ? {
-          calorieTarget: nutrition.calorie_target,
-          proteinG: nutrition.protein_g,
-          carbsG: nutrition.carbs_g,
-          fatG: nutrition.fat_g,
-          nextConsultDate: nutrition.next_consult_date,
-          adherencePct: nutrition.adherence_pct,
         }
       : null,
     evaluations: (evaluations ?? []).map((e) => ({

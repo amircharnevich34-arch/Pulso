@@ -19,7 +19,7 @@ const initialState: EvaluationFormState = {};
 
 export function EvaluationForm({ athletes }: { athletes: RosterAthlete[] }) {
   const [state, formAction, pending] = useActionState(createEvaluation, initialState);
-  const [type, setType] = useState<"medica" | "entrenamiento" | "nutricion">("medica");
+  const [type, setType] = useState<"medica" | "entrenamiento">("medica");
 
   return (
     <form action={formAction} className="mt-6 grid max-w-xl gap-4">
@@ -40,7 +40,6 @@ export function EvaluationForm({ athletes }: { athletes: RosterAthlete[] }) {
           [
             { value: "medica", label: "Médica" },
             { value: "entrenamiento", label: "Entrenamiento" },
-            { value: "nutricion", label: "Nutrición" },
           ] as const
         ).map((t) => (
           <button
@@ -93,7 +92,12 @@ export function EvaluationForm({ athletes }: { athletes: RosterAthlete[] }) {
         <fieldset className="grid gap-3 rounded-md border border-black/10 p-4">
           <label className="grid gap-1 text-sm">
             <span className="text-black/60">Prueba realizada</span>
-            <input name="testRealizado" type="text" className="rounded-md border border-black/15 px-3 py-2" />
+            <input
+              name="testRealizado"
+              type="text"
+              placeholder="Ej. Tiro de media distancia, triples, rebotes…"
+              className="rounded-md border border-black/15 px-3 py-2"
+            />
           </label>
           <label className="grid gap-1 text-sm">
             <span className="text-black/60">Resultado</span>
@@ -102,23 +106,6 @@ export function EvaluationForm({ athletes }: { athletes: RosterAthlete[] }) {
           <label className="grid gap-1 text-sm">
             <span className="text-black/60">Percepción de esfuerzo (RPE 1-10)</span>
             <input name="rpe" type="number" min={1} max={10} className="rounded-md border border-black/15 px-3 py-2" />
-          </label>
-        </fieldset>
-      )}
-
-      {type === "nutricion" && (
-        <fieldset className="grid gap-3 rounded-md border border-black/10 p-4">
-          <label className="grid gap-1 text-sm">
-            <span className="text-black/60">Peso actual (kg)</span>
-            <input name="peso" type="number" step="0.1" className="rounded-md border border-black/15 px-3 py-2" />
-          </label>
-          <label className="grid gap-1 text-sm">
-            <span className="text-black/60">Adherencia al plan</span>
-            <select name="adherencia" className="rounded-md border border-black/15 px-3 py-2">
-              <option>Alta</option>
-              <option>Media</option>
-              <option>Baja</option>
-            </select>
           </label>
         </fieldset>
       )}

@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getMyAthleteProfileId } from "@/lib/data/athletes";
 import { getPainDiary } from "@/lib/data/diary";
-import { PainDiaryForm } from "@/components/dieta/pain-diary-form";
-import { DietDiaryForm } from "@/components/dieta/diet-diary-form";
+import { PainDiaryForm } from "@/components/diario/pain-diary-form";
 
 const painZoneLabel: Record<string, string> = {
   cuello: "Cuello",
@@ -36,13 +35,6 @@ export default async function DiarioPage() {
     );
   }
 
-  const { data: dietEntries } = await supabase
-    .from("diary_diet_entries")
-    .select("id, entry_date, notes")
-    .eq("athlete_id", athleteId)
-    .order("entry_date", { ascending: false })
-    .order("created_at", { ascending: false });
-
   const painEntries = await getPainDiary(athleteId);
 
   return (
@@ -68,25 +60,6 @@ export default async function DiarioPage() {
                 )}
               </div>
               {e.notes && <p className="mt-1">{e.notes}</p>}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="mt-10">
-        <h2 className="mb-2 font-semibold">Diario de tu dieta</h2>
-        <p className="mb-2 text-sm text-black/50">
-          Cuéntale a tu nutriólogo cómo te sentiste — lo va a leer antes de tu próxima cita.
-        </p>
-        <DietDiaryForm />
-        <ul className="mt-4 divide-y divide-black/5">
-          {(!dietEntries || dietEntries.length === 0) && (
-            <p className="text-sm text-black/50">Sin entradas todavía.</p>
-          )}
-          {(dietEntries ?? []).map((e) => (
-            <li key={e.id} className="py-3 text-sm">
-              <div className="text-black/50">{e.entry_date}</div>
-              <p className="mt-1">{e.notes}</p>
             </li>
           ))}
         </ul>

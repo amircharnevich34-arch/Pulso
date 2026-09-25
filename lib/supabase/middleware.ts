@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const STAFF_ROLES = new Set(["medico", "entrenador", "nutriologo", "admin"]);
+const STAFF_ROLES = new Set(["medico", "entrenador", "admin"]);
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -48,7 +48,7 @@ export async function updateSession(request: NextRequest) {
       .single();
 
     const role = profile?.role as string | undefined;
-    const isStaffArea = ["/dashboard", "/deportistas", "/evaluaciones", "/planes"].some((p) => path.startsWith(p));
+    const isStaffArea = ["/dashboard", "/deportistas", "/evaluaciones", "/planes", "/juegos"].some((p) => path.startsWith(p));
     const isAthleteArea = ["/hoy", "/diario"].some((p) => path.startsWith(p));
     const homePath = role === "deportista" ? "/hoy" : "/dashboard";
 

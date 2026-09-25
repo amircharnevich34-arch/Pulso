@@ -40,31 +40,3 @@ export async function createPainEntry(
   revalidatePath("/diario");
   return { success: true };
 }
-
-export async function createDietDiaryEntry(
-  _prev: DiaryFormState,
-  formData: FormData
-): Promise<DiaryFormState> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "No hay sesión activa." };
-
-  const athleteId = await getMyAthleteProfileId(user.id);
-  if (!athleteId) return { error: "Tu cuenta todavía no está conectada con tu ficha de deportista." };
-
-  const notes = String(formData.get("notes") ?? "").trim();
-  if (!notes) return { error: "Escribí algo antes de guardar." };
-
-  const { error } = await supabase.from("diary_diet_entries").insert({
-    athlete_id: athleteId,
-    entry_date: todayInMexicoCity(),
-    notes,
-  });
-
-  if (error) return { error: "No se pudo guardar: " + error.message };
-
-  revalidatePath("/hoy");
-  return { success: true };
-}

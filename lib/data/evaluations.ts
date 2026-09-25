@@ -55,16 +55,6 @@ export async function createEvaluation(
       speed_test_result: data.resultado as string | null,
       updated_at: new Date().toISOString(),
     });
-  } else if (type === "nutricion") {
-    data.peso = formData.get("peso") ? Number(formData.get("peso")) : null;
-    data.adherencia = formData.get("adherencia") || null;
-
-    const adherenceMap: Record<string, number> = { Alta: 90, Media: 60, Baja: 30 };
-    await supabase.from("athlete_nutrition_status").upsert({
-      athlete_id: athleteId,
-      adherence_pct: adherenceMap[data.adherencia as string] ?? null,
-      updated_at: new Date().toISOString(),
-    });
   }
 
   const { error } = await supabase.from("evaluations").insert({

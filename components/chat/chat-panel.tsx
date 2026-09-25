@@ -7,7 +7,6 @@ import type { ChatChannel, ChatMessage, ChatParticipant } from "@/lib/data/chat"
 const roleLabel: Record<string, string> = {
   medico: "Médico",
   entrenador: "Entrenador",
-  nutriologo: "Nutriólogo",
   deportista: "Deportista",
   admin: "Admin",
 };
