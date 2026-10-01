@@ -48,7 +48,7 @@ export async function updateSession(request: NextRequest) {
       .single();
 
     const role = profile?.role as string | undefined;
-    const isStaffArea = ["/dashboard", "/deportistas", "/evaluaciones", "/planes", "/juegos"].some((p) => path.startsWith(p));
+    const isStaffArea = ["/dashboard", "/deportistas", "/evaluaciones", "/planes", "/juegos", "/asistencia"].some((p) => path.startsWith(p));
     const isAthleteArea = ["/hoy", "/diario"].some((p) => path.startsWith(p));
     const homePath = role === "deportista" ? "/hoy" : "/dashboard";
 
