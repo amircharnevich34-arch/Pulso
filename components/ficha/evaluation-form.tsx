@@ -17,9 +17,23 @@ const painZones = [
 
 const initialState: EvaluationFormState = {};
 
+const shotTests = [
+  { value: "media", label: "Tiro de media distancia (10 intentos)", attempts: 10 },
+  { value: "triple", label: "Tiro de triple (10 intentos)", attempts: 10 },
+] as const;
+
 export function EvaluationForm({ athletes }: { athletes: RosterAthlete[] }) {
   const [state, formAction, pending] = useActionState(createEvaluation, initialState);
   const [type, setType] = useState<"medica" | "entrenamiento">("medica");
+  const [shotTest, setShotTest] = useState<"" | (typeof shotTests)[number]["value"]>("");
+  const [makes, setMakes] = useState("");
+
+  const selectedShotTest = shotTests.find((t) => t.value === shotTest);
+  const testRealizadoValue = selectedShotTest ? selectedShotTest.label : undefined;
+  const resultadoValue =
+    selectedShotTest && makes !== ""
+      ? `${makes}/${selectedShotTest.attempts} (${Math.round((Number(makes) / selectedShotTest.attempts) * 100)}%)`
+      : undefined;
 
   return (
     <form action={formAction} className="mt-6 grid max-w-xl gap-4">
@@ -91,18 +105,62 @@ export function EvaluationForm({ athletes }: { athletes: RosterAthlete[] }) {
       {type === "entrenamiento" && (
         <fieldset className="grid gap-3 rounded-md border border-black/10 p-4">
           <label className="grid gap-1 text-sm">
-            <span className="text-black/60">Prueba realizada</span>
-            <input
-              name="testRealizado"
-              type="text"
-              placeholder="Ej. Tiro de media distancia, triples, rebotes…"
+            <span className="text-black/60">Prueba</span>
+            <select
+              value={shotTest}
+              onChange={(e) => {
+                setShotTest(e.target.value as typeof shotTest);
+                setMakes("");
+              }}
               className="rounded-md border border-black/15 px-3 py-2"
-            />
+            >
+              <option value="">Otra (escribir abajo)</option>
+              {shotTests.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
           </label>
-          <label className="grid gap-1 text-sm">
-            <span className="text-black/60">Resultado</span>
-            <input name="resultado" type="text" className="rounded-md border border-black/15 px-3 py-2" />
-          </label>
+
+          {selectedShotTest ? (
+            <label className="grid gap-1 text-sm">
+              <span className="text-black/60">Aciertos (de {selectedShotTest.attempts})</span>
+              <input
+                type="number"
+                min={0}
+                max={selectedShotTest.attempts}
+                value={makes}
+                onChange={(e) => setMakes(e.target.value)}
+                className="rounded-md border border-black/15 px-3 py-2"
+              />
+              {resultadoValue && <span className="text-xs text-black/50">Resultado: {resultadoValue}</span>}
+            </label>
+          ) : (
+            <>
+              <label className="grid gap-1 text-sm">
+                <span className="text-black/60">Prueba realizada</span>
+                <input
+                  name="testRealizado"
+                  type="text"
+                  placeholder="Ej. rebotes, sprint 20m…"
+                  className="rounded-md border border-black/15 px-3 py-2"
+                />
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span className="text-black/60">Resultado</span>
+                <input name="resultado" type="text" className="rounded-md border border-black/15 px-3 py-2" />
+              </label>
+            </>
+          )}
+
+          {selectedShotTest && (
+            <>
+              <input type="hidden" name="testRealizado" value={testRealizadoValue} />
+              <input type="hidden" name="resultado" value={resultadoValue ?? ""} />
+            </>
+          )}
+
           <label className="grid gap-1 text-sm">
             <span className="text-black/60">Percepción de esfuerzo (RPE 1-10)</span>
             <input name="rpe" type="number" min={1} max={10} className="rounded-md border border-black/15 px-3 py-2" />
